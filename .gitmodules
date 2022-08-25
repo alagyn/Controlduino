@@ -1,0 +1,6 @@
+[submodule "ViGEmClient"]
+	path = ViGEmClient
+	url = https://github.com/ViGEm/ViGEmClient.git
+[submodule "imgui"]
+	path = imgui
+	url = https://github.com/ocornut/imgui.git
