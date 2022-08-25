@@ -21,8 +21,8 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{f5aa83f8-ac71-4261-a37d-92b28a863bbe}</ProjectGuid>
-    <RootNamespace>SerialController</RootNamespace>
+    <ProjectGuid>{9df44328-173b-48e8-a0d0-f9a13fdacf40}</ProjectGuid>
+    <RootNamespace>Controlduino</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -78,6 +78,8 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
+    <OutDir>$(SolutionDir)build\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)build\$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
@@ -88,8 +90,6 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)\ViGEmClient\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <DisableSpecificWarnings>26812</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -118,6 +118,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>$(SolutionDir)ViGEmClient\include;$(ProjectDir)inc</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -141,17 +142,17 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="ErrorUtils.cpp" />
-    <ClCompile Include="main.cpp" />
-    <ClCompile Include="Serializer.cpp" />
+    <ClInclude Include="inc\ErrorUtils.h" />
+    <ClInclude Include="inc\SerialErrors.h" />
+    <ClInclude Include="inc\Serializer.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="ErrorUtils.h" />
-    <ClInclude Include="SerialErrors.h" />
-    <ClInclude Include="Serializer.h" />
+    <ClCompile Include="src\ErrorUtils.cpp" />
+    <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\Serializer.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="ViGEmClient\src\ViGEmClient.vcxproj">
+    <ProjectReference Include="..\ViGEmClient\src\ViGEmClient.vcxproj">
       <Project>{7db06674-1f4f-464b-8e1c-172e9587f9dc}</Project>
     </ProjectReference>
   </ItemGroup>
