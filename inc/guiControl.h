@@ -6,7 +6,7 @@ typedef void (*DrawFunc)(void);
 
 void startGui(DrawFunc drawFunc);
 
-std::wstring selectComPort();
+std::string selectComPort();
 
 class GUIError : public std::exception
 {

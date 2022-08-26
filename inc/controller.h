@@ -11,14 +11,14 @@
 class Controller
 {
 private:
-	PVIGEM_CLIENT client;
-	PVIGEM_TARGET pad;
+    PVIGEM_CLIENT client;
+    PVIGEM_TARGET pad;
 
 public:
-	explicit Controller();
-	~Controller();
+    explicit Controller();
+    ~Controller();
 
-	void update(const XUSB_REPORT& state);
+    void update(const XUSB_REPORT& state);
 };
 
 class ControllerException : public std::exception
