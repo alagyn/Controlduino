@@ -1,9 +1,9 @@
-[submodule "ViGEmClient"]
+[submodule "third_party/ViGEmClient"]
 	path = third_party/ViGEmClient
 	url = https://github.com/ViGEm/ViGEmClient.git
-[submodule "imgui"]
+[submodule "third_party/imgui"]
 	path = third_party/imgui
 	url = https://github.com/ocornut/imgui.git
-[submodule "glfw"]
+[submodule "third_party/glfw"]
 	path = third_party/glfw
 	url = https://github.com/glfw/glfw.git
