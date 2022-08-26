@@ -1,4 +1,4 @@
 #pragma once
 
-void displayError(const wchar_t* from, const wchar_t* msgbuff);
-void displayLastError(const wchar_t* from);
+void displayError(const char* from, const char* msgbuff);
+void displayLastError(const char* from);

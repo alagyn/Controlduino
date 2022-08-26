@@ -26,7 +26,7 @@ Serializer::Serializer(const string& port, DWORD baudRate)
 
 	if(handle == INVALID_HANDLE_VALUE)
 	{
-		displayLastError(L"CreateFile");
+		displayLastError("CreateFile");
 		throw InitError();
 	}
 
@@ -34,7 +34,7 @@ Serializer::Serializer(const string& port, DWORD baudRate)
 
 	if(!GetCommState(handle, &serialParams))
 	{
-		displayLastError(L"GetCommState");
+		displayLastError("GetCommState");
 		throw InitError();
 	}
 
@@ -46,7 +46,7 @@ Serializer::Serializer(const string& port, DWORD baudRate)
 
 	if(!SetCommState(handle, &serialParams))
 	{
-		displayLastError(L"SetCommState");
+		displayLastError("SetCommState");
 		throw InitError();
 	}
 
@@ -77,7 +77,7 @@ void Serializer::readBytes(unsigned long timeoutMs, uint8_t* out, DWORD size)
 		{
 			if(!ReadFile(handle, out, size, nullptr, nullptr))
 			{
-				displayLastError(L"readByte");
+				displayLastError("Serial::readByte");
 				throw ReadError();
 			}
 
@@ -92,7 +92,7 @@ void Serializer::write(const std::string& msg)
 {
 	if(!WriteFile(handle, msg.c_str(), (DWORD)msg.size(), nullptr, nullptr))
 	{
-		displayLastError(L"write");
+		displayLastError("Serial::write()");
 		throw WriteError();
 	}
 }
@@ -100,15 +100,15 @@ void Serializer::write(const std::string& msg)
 void Serializer::checkPorts(std::vector<std::wstring>& out)
 {
 	constexpr size_t BUF_SIZE = 1000;
-	wchar_t path[BUF_SIZE];
+	char path[BUF_SIZE];
 
 	out.clear();
 
 	for (size_t i = 0; i < 255; ++i)
 	{
-		std::wstringstream ss;
-		ss << L"COM" << i;
-		DWORD ret = QueryDosDevice(ss.str().c_str(), path, BUF_SIZE);
+		std::stringstream ss;
+		ss << "COM" << i;
+		DWORD ret = QueryDosDeviceA(ss.str().c_str(), path, BUF_SIZE);
 		if (ret != 0)
 		{
 			out.emplace_back(path);

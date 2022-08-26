@@ -28,4 +28,5 @@ Triggers are just buttons (for now)
 LT = A0 as digital
 RT = A1 as digital
 
-Start = A0/D14
+Start = D2
+Back = 13
