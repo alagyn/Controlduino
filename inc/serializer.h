@@ -19,6 +19,6 @@ namespace bdd {
         void readBytes(unsigned long timeoutMicroS, uint8_t* out, DWORD bytes);
         void write(const std::string& msg);
 
-        static void checkPorts(std::vector<std::string>& out);
+        static void checkPorts(std::vector<std::pair<std::string, std::string>>& out);
     };
 } //namespace bdd

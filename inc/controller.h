@@ -1,8 +1,11 @@
 #pragma once
 #include <exception>
 #define WIN32_LEAN_AND_MEAN
-#include <ViGEm/Client.h>
+
 #include <Windows.h>
+// Force these separate since Windows.h MUST come first
+#include <ViGEm/Client.h>
+
 #pragma comment(lib, "setupapi.lib")
 
 #include "calibration.h"

@@ -1,25 +1,35 @@
-#include "guiControl.h"
+#include <errorUtils.h>
+#include <guiControl.h>
+#include <serializer.h>
 
+#include <iostream>
+#include <sstream>
+
+#include <GLFW/glfw3.h>
 #include <backends\imgui_impl_glfw.h>
 #include <backends\imgui_impl_opengl3.h>
 #include <imgui.h>
-#include <stdio.h>
-
-#include <GLFW/glfw3.h>
 
 namespace bdd {
 
     static void glfw_error_callback(int error, const char* description)
     {
-        fprintf(stderr, "Glfw Error %d: %s\n", error, description);
+        std::stringstream ss;
+        ss << "GLFW Error " << error << ": " << description;
+        displayError("GLFW", ss.str().c_str());
     }
 
-    void startGui(DrawFunc drawFunc)
+    ControlduinoGUI::ControlduinoGUI()
+        : mode(Mode::None)
+        , window(nullptr)
+        , port()
+        , fresh(true)
     {
         // Setup window
         glfwSetErrorCallback(glfw_error_callback);
         if(!glfwInit())
         {
+            displayError("GUI", "Cannot Init GLFW");
             throw GUIError();
         }
 
@@ -27,13 +37,12 @@ namespace bdd {
         const char* glsl_version = "#version 130";
         glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
-        //glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);  // 3.2+ only
-        //glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);            // 3.0+ only
 
         // Create window with graphics context
-        GLFWwindow* window = glfwCreateWindow(1280, 720, "Dear ImGui GLFW+OpenGL3 example", NULL, NULL);
+        window = glfwCreateWindow(720, 720, "Dear ImGui GLFW+OpenGL3 example", NULL, NULL);
         if(window == NULL)
         {
+            displayError("GUI", "Cannot create window");
             throw GUIError();
         }
         glfwMakeContextCurrent(window);
@@ -53,11 +62,32 @@ namespace bdd {
         // Setup Platform/Renderer backends
         ImGui_ImplGlfw_InitForOpenGL(window, true);
         ImGui_ImplOpenGL3_Init(glsl_version);
+    }
 
+    ControlduinoGUI::~ControlduinoGUI()
+    {
+        // Cleanup
+        ImGui_ImplOpenGL3_Shutdown();
+        ImGui_ImplGlfw_Shutdown();
+        ImGui::DestroyContext();
+
+        glfwDestroyWindow(window);
+        glfwTerminate();
+    }
+
+    constexpr int windowFlags =
+        ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse;
+
+    void ControlduinoGUI::loop()
+    {
         ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
+        auto io = ImGui::GetIO();
+
+        bool run = true;
+        fresh = true;
         // Main loop
-        while(!glfwWindowShouldClose(window))
+        while(!glfwWindowShouldClose(window) && run)
         {
             glfwPollEvents();
 
@@ -66,7 +96,22 @@ namespace bdd {
             ImGui_ImplGlfw_NewFrame();
             ImGui::NewFrame();
 
-            drawFunc();
+            ImGui::SetNextWindowPos(ImVec2(0, 0));
+            ImGui::SetNextWindowSize(io.DisplaySize);
+            ImGui::Begin("Controlduino", nullptr, windowFlags);
+
+            switch(mode)
+            {
+            case Mode::Port:
+                run = drawComSelect();
+                break;
+            default:
+                break;
+            }
+
+            ImGui::End();
+
+            fresh = false;
 
             // Rendering
             ImGui::Render();
@@ -82,25 +127,40 @@ namespace bdd {
 
             glfwSwapBuffers(window);
         }
-
-        // Cleanup
-        ImGui_ImplOpenGL3_Shutdown();
-        ImGui_ImplGlfw_Shutdown();
-        ImGui::DestroyContext();
-
-        glfwDestroyWindow(window);
-        glfwTerminate();
     }
 
-    void draw()
+    std::string ControlduinoGUI::getComPort()
     {
-        ImGui::ShowDemoWindow();
+        mode = Mode::Port;
+        loop();
+        return port;
     }
 
-    std::string selectComPort()
+    bool ControlduinoGUI::drawComSelect()
     {
-        startGui(draw);
-        return "COM4";
+        static std::vector<std::pair<std::string, std::string>> ports;
+
+        if(ImGui::Button("Refresh") || fresh)
+        {
+            Serializer::checkPorts(ports);
+            std::cout << "Found " << ports.size() << " Ports\n";
+        }
+
+        for(auto iter = ports.begin(); iter != ports.end(); ++iter)
+        {
+            std::stringstream ss;
+            auto val = *iter;
+            ss << val.first << ": " << val.second;
+            ImGui::Text(ss.str().c_str());
+            ImGui::SameLine();
+            if(ImGui::Button("Select"))
+            {
+                port = val.first;
+                return false;
+            }
+        }
+
+        return true;
     }
 
 } //namespace bdd

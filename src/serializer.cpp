@@ -1,6 +1,6 @@
-#include <ErrorUtils.h>
-#include <SerialErrors.h>
-#include <Serializer.h>
+#include <errorUtils.h>
+#include <serialErrors.h>
+#include <serializer.h>
 
 #include <chrono>
 #include <sstream>
@@ -96,7 +96,7 @@ namespace bdd {
         }
     }
 
-    void Serializer::checkPorts(std::vector<std::string>& out)
+    void Serializer::checkPorts(std::vector<std::pair<std::string, std::string>>& out)
     {
         constexpr size_t BUF_SIZE = 1000;
         char path[BUF_SIZE];
@@ -110,7 +110,7 @@ namespace bdd {
             DWORD ret = QueryDosDeviceA(ss.str().c_str(), path, BUF_SIZE);
             if(ret != 0)
             {
-                out.emplace_back(path);
+                out.emplace_back(std::make_pair(ss.str(), path));
             }
         }
     }
