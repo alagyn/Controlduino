@@ -1,0 +1,31 @@
+Left Stick
+  Button = A2 as digital
+  X = A3
+  Y = A4
+  
+Right Stick
+  Button = A5 as digital
+  X = A6
+  Y = A7
+  
+  
+D-Pad
+  Up = D12
+  Right = D11
+  Down = D10
+  Left = D9
+  
+Buttons
+  Y = D8
+  B = D7
+  A = D6
+  X = D5
+  
+LB = D4
+RB = D3
+
+Triggers are just buttons (for now)
+LT = A0 as digital
+RT = A1 as digital
+
+Start = A0/D14

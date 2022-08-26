@@ -4,8 +4,7 @@
 
 #include <strsafe.h>
 #include <chrono>
-
-#define displayError(from) _displayError((wchar_t*)from)
+#include <sstream>
 
 using namespace std;
 using namespace serializer;
@@ -59,7 +58,7 @@ Serializer::~Serializer()
 	CloseHandle(handle);
 }
 
-void Serializer::readByte(unsigned long timeoutMs, uint8_t* out)
+void Serializer::readBytes(unsigned long timeoutMs, uint8_t* out, DWORD size)
 {
 	using clock = std::chrono::high_resolution_clock;
 
@@ -76,7 +75,7 @@ void Serializer::readByte(unsigned long timeoutMs, uint8_t* out)
 
 		if(status.cbInQue > 0)
 		{
-			if(!ReadFile(handle, out, 1, nullptr, nullptr))
+			if(!ReadFile(handle, out, size, nullptr, nullptr))
 			{
 				displayLastError(L"readByte");
 				throw ReadError();
@@ -91,9 +90,28 @@ void Serializer::readByte(unsigned long timeoutMs, uint8_t* out)
 
 void Serializer::write(const std::string& msg)
 {
-	if(!WriteFile(handle, msg.c_str(), msg.size(), nullptr, nullptr))
+	if(!WriteFile(handle, msg.c_str(), (DWORD)msg.size(), nullptr, nullptr))
 	{
 		displayLastError(L"write");
 		throw WriteError();
+	}
+}
+
+void Serializer::checkPorts(std::vector<std::wstring>& out)
+{
+	constexpr size_t BUF_SIZE = 1000;
+	wchar_t path[BUF_SIZE];
+
+	out.clear();
+
+	for (size_t i = 0; i < 255; ++i)
+	{
+		std::wstringstream ss;
+		ss << L"COM" << i;
+		DWORD ret = QueryDosDevice(ss.str().c_str(), path, BUF_SIZE);
+		if (ret != 0)
+		{
+			out.emplace_back(path);
+		}
 	}
 }

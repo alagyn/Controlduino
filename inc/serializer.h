@@ -1,6 +1,7 @@
 #pragma once
 #include <Windows.h>
 #include <string>
+#include <vector>
 
 namespace serializer
 {
@@ -15,7 +16,9 @@ namespace serializer
 		Serializer(const Serializer&) = delete;
 		~Serializer();
 
-		void readByte(unsigned long timeoutMicroS, uint8_t* out);
+		void readBytes(unsigned long timeoutMicroS, uint8_t* out, DWORD bytes);
 		void write(const std::string& msg);
+
+		static void checkPorts(std::vector<std::wstring>& out);
 	};
 }

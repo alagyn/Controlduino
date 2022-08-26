@@ -1,0 +1,1 @@
+arduino-cli compile --fqbn arduino:avr:nano Controlduino --build-path build --build-cache-path cache
