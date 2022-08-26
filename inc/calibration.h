@@ -1,30 +1,31 @@
 #pragma once
-#include <stdint.h>
 #include <exception>
+#include <stdint.h>
 
-class Calibration
-{
-public:
-    explicit Calibration();
-    Calibration(Calibration&) = delete;
+namespace bdd {
+    class Calibration
+    {
+    public:
+        explicit Calibration();
+        Calibration(Calibration&) = delete;
 
-    int16_t clampLX(const uint16_t in);
-    int16_t clampLY(const uint16_t in);
-    
-    int16_t clampRX(const uint16_t in);
-    int16_t clampRY(const uint16_t in);
-private:
+        int16_t clampLX(const uint16_t in);
+        int16_t clampLY(const uint16_t in);
 
-    uint16_t lxMin, lxWidth;
-    uint16_t lyMin, lyWidth;
-    int16_t lxDead, lyDead;
+        int16_t clampRX(const uint16_t in);
+        int16_t clampRY(const uint16_t in);
 
-    uint16_t rxMin, rxWidth;
-    uint16_t ryMin, ryWidth;
-    int16_t rxDead, ryDead;
-};
+    private:
+        uint16_t lxMin, lxWidth;
+        uint16_t lyMin, lyWidth;
+        int16_t lxDead, lyDead;
 
-class CalibrationError : public std::exception
-{
+        uint16_t rxMin, rxWidth;
+        uint16_t ryMin, ryWidth;
+        int16_t rxDead, ryDead;
+    };
 
-};
+    class CalibrationError : public std::exception
+    {
+    };
+} //namespace bdd

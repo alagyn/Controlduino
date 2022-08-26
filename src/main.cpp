@@ -1,23 +1,25 @@
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 
-#include "Serializer.h"
-#include "SerialErrors.h"
 #include "ErrorUtils.h"
-#include <arduino_xinput.h>
+#include "SerialErrors.h"
+#include "Serializer.h"
 #include "calibration.h"
+#include "controller.h"
+#include <arduino_xinput.h>
+#include <guiControl.h>
 
-#include <iostream>
 #include <iomanip>
+#include <iostream>
 #include <sstream>
 
 #include <ViGEm/Client.h>
-#include "controller.h"
 
 int main(int argc, char* argv[])
 {
     // TODO select com-device
-    serializer::Serializer serial("COM4", CBR_9600);
+    std::string comPort = selectComPort();
+    bdd::Serializer serial("COM4", CBR_9600);
 
     // Init Controller
     Controller controller;
@@ -31,14 +33,13 @@ int main(int argc, char* argv[])
     Ard_XInput ard_state;
     uint8_t* buff = (uint8_t*)&ard_state;
 
-    
     // TODO exitting
     // TODO remapping
     bool run = true;
-    while (run)
+    while(run)
     {
         serial.readBytes(10000, buff, sizeof(Ard_XInput));
-        
+
         state.wButtons = ard_state.buttons;
         state.bLeftTrigger = ard_state.lTrigger;
         state.bRightTrigger = ard_state.rTrigger;

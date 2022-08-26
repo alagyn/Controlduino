@@ -2,13 +2,19 @@
 #include <exception>
 #include <string>
 
-typedef void (*DrawFunc)(void);
+namespace bdd {
 
-void startGui(DrawFunc drawFunc);
+    class ControlduinoGUI
+    {
+    public:
+        ControlduinoGUI();
+        ~ControlduinoGUI();
 
-std::string selectComPort();
+        std::string getComPort();
+        // TODO remap
+    };
 
-class GUIError : public std::exception
-{
-
-};
+    class GUIError : public std::exception
+    {
+    };
+} //namespace bdd

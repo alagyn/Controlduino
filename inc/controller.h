@@ -1,27 +1,29 @@
 #pragma once
 #include <exception>
 #define WIN32_LEAN_AND_MEAN
-#include <Windows.h>
 #include <ViGEm/Client.h>
+#include <Windows.h>
 #pragma comment(lib, "setupapi.lib")
-
 
 #include "calibration.h"
 
-class Controller
-{
-private:
-    PVIGEM_CLIENT client;
-    PVIGEM_TARGET pad;
+namespace bdd {
 
-public:
-    explicit Controller();
-    ~Controller();
+    class Controller
+    {
+    private:
+        PVIGEM_CLIENT client;
+        PVIGEM_TARGET pad;
 
-    void update(const XUSB_REPORT& state);
-};
+    public:
+        explicit Controller();
+        ~Controller();
 
-class ControllerException : public std::exception
-{
+        void update(const XUSB_REPORT& state);
+    };
 
-};
+    class ControllerException : public std::exception
+    {
+    };
+
+} //namespace bdd

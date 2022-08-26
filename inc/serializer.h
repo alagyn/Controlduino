@@ -3,14 +3,14 @@
 #include <string>
 #include <vector>
 
-namespace serializer
-{
+namespace bdd {
     class Serializer
     {
     private:
         HANDLE handle;
         COMSTAT status;
         DWORD errors;
+
     public:
         explicit Serializer(const std::string& port, DWORD baudRate);
         Serializer(const Serializer&) = delete;
@@ -21,4 +21,4 @@ namespace serializer
 
         static void checkPorts(std::vector<std::string>& out);
     };
-}
+} //namespace bdd
