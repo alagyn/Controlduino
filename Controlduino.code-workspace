@@ -1,0 +1,19 @@
+{
+	"folders": [
+		{
+			"name": "root",
+			"path": "."
+		},
+		{
+			"path": "arduino"
+		}
+	],
+	"settings": {
+		"files.associations": {
+			"xstring": "cpp",
+			"exception": "cpp",
+			"iosfwd": "cpp",
+			"charconv": "cpp"
+		}
+	}
+}

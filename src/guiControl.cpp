@@ -1,3 +1,4 @@
+#include <arduino_xinput.h>
 #include <errorUtils.h>
 #include <guiControl.h>
 #include <serializer.h>
@@ -20,10 +21,10 @@ namespace bdd {
     }
 
     ControlduinoGUI::ControlduinoGUI()
-        : mode(Mode::None)
-        , window(nullptr)
+        : window(nullptr)
         , port()
         , fresh(true)
+        , infoPtr(nullptr)
     {
         // Setup window
         glfwSetErrorCallback(glfw_error_callback);
@@ -39,7 +40,7 @@ namespace bdd {
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
 
         // Create window with graphics context
-        window = glfwCreateWindow(720, 720, "Dear ImGui GLFW+OpenGL3 example", NULL, NULL);
+        window = glfwCreateWindow(480, 480, "Dear ImGui GLFW+OpenGL3 example", NULL, NULL);
         if(window == NULL)
         {
             displayError("GUI", "Cannot create window");
@@ -75,64 +76,81 @@ namespace bdd {
         glfwTerminate();
     }
 
+    void ControlduinoGUI::setInfoPtr(XUSB_REPORT* infoPtr)
+    {
+        this->infoPtr = infoPtr;
+    }
+
     constexpr int windowFlags =
         ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse;
 
-    void ControlduinoGUI::loop()
+    ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+
+    bool ControlduinoGUI::poll(GUIMode mode)
     {
-        ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+        bool run = true;
+        // Main loop
+
+        glfwPollEvents();
+
+        // Start the Dear ImGui frame
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
 
         auto io = ImGui::GetIO();
 
-        bool run = true;
-        fresh = true;
-        // Main loop
-        while(!glfwWindowShouldClose(window) && run)
+        ImGui::SetNextWindowPos(ImVec2(0, 0));
+        ImGui::SetNextWindowSize(io.DisplaySize);
+        ImGui::Begin("Controlduino", nullptr, windowFlags);
+
+        switch(mode)
         {
-            glfwPollEvents();
-
-            // Start the Dear ImGui frame
-            ImGui_ImplOpenGL3_NewFrame();
-            ImGui_ImplGlfw_NewFrame();
-            ImGui::NewFrame();
-
-            ImGui::SetNextWindowPos(ImVec2(0, 0));
-            ImGui::SetNextWindowSize(io.DisplaySize);
-            ImGui::Begin("Controlduino", nullptr, windowFlags);
-
-            switch(mode)
-            {
-            case Mode::Port:
-                run = drawComSelect();
-                break;
-            default:
-                break;
-            }
-
-            ImGui::End();
-
-            fresh = false;
-
-            // Rendering
-            ImGui::Render();
-            int display_w, display_h;
-            glfwGetFramebufferSize(window, &display_w, &display_h);
-            glViewport(0, 0, display_w, display_h);
-            glClearColor(clear_color.x * clear_color.w,
-                         clear_color.y * clear_color.w,
-                         clear_color.z * clear_color.w,
-                         clear_color.w);
-            glClear(GL_COLOR_BUFFER_BIT);
-            ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-
-            glfwSwapBuffers(window);
+        case GUIMode::Port:
+            run = drawComSelect();
+            break;
+        case GUIMode::Info:
+            run = drawInfo();
+            break;
+        default:
+            break;
         }
+
+        ImGui::End();
+
+        //ImGui::ShowDemoWindow();
+
+        fresh = false;
+
+        // Rendering
+        ImGui::Render();
+        int display_w, display_h;
+        glfwGetFramebufferSize(window, &display_w, &display_h);
+        glViewport(0, 0, display_w, display_h);
+        glClearColor(clear_color.x * clear_color.w,
+                     clear_color.y * clear_color.w,
+                     clear_color.z * clear_color.w,
+                     clear_color.w);
+        glClear(GL_COLOR_BUFFER_BIT);
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+        glfwSwapBuffers(window);
+
+        run = run && !glfwWindowShouldClose(window);
+
+        return run;
+    }
+
+    void ControlduinoGUI::loop(GUIMode mode)
+    {
+        while(poll(mode))
+            ;
     }
 
     std::string ControlduinoGUI::getComPort()
     {
-        mode = Mode::Port;
-        loop();
+        fresh = true;
+        loop(GUIMode::Port);
         return port;
     }
 
@@ -159,6 +177,101 @@ namespace bdd {
                 return false;
             }
         }
+
+        return true;
+    }
+
+    void ControlduinoGUI::drawInfo_Button(const char* title, uint16_t mask)
+    {
+        std::stringstream ss;
+        ss << title << ": " << (bool)(infoPtr->wButtons & mask);
+        ImGui::Text(ss.str().c_str());
+    }
+
+    float map(int16_t in, float min, float max)
+    {
+        constexpr float range = (float)UINT16_MAX;
+        float x = in;
+
+        return min + (max - min) * ((x - (float)INT16_MIN) / (range));
+    }
+
+    bool ControlduinoGUI::drawInfo()
+    {
+        drawInfo_Button("A", button::A);
+        drawInfo_Button("B", button::B);
+        drawInfo_Button("X", button::X);
+        drawInfo_Button("Y", button::Y);
+
+        ImGui::Separator();
+
+        drawInfo_Button("Up", button::Up);
+        drawInfo_Button("Down", button::Down);
+        drawInfo_Button("Left", button::Left);
+        drawInfo_Button("Right", button::Right);
+
+        ImGui::Separator();
+
+        drawInfo_Button("LB", button::LB);
+        drawInfo_Button("RB", button::RB);
+
+        drawInfo_Button("L3", button::L3);
+        drawInfo_Button("R3", button::R3);
+
+        ImGui::Separator();
+
+        drawInfo_Button("Start", button::Start);
+        drawInfo_Button("Back", button::Back);
+
+        ImDrawList* drawlist = ImGui::GetWindowDrawList();
+
+        ImGui::Columns(2);
+        ImGui::Text("Left Stick");
+        {
+            std::stringstream ss;
+            ss << "X:" << infoPtr->sThumbLX << " Y:" << infoPtr->sThumbLY;
+            ImGui::Text(ss.str().c_str());
+        }
+
+        ImVec2 c = ImGui::GetCursorPos();
+
+        ImVec4 colorvec(1.0f, 1.0f, 1.0f, 1.0f);
+        ImColor color = ImColor(colorvec);
+        ImVec2 c2 = c;
+        c2.x += 50;
+        c2.y += 50;
+        drawlist->AddRect(c, c2, color);
+
+        ImVec2 c3 = c;
+
+        c3.x = map(infoPtr->sThumbLX, c.x, c2.x);
+        c3.y = map(infoPtr->sThumbLY, c.y, c2.y);
+
+        drawlist->AddNgon(c3, 2, color, 4, 1);
+
+        ImGui::NextColumn();
+        ImGui::Text("Right Stick");
+
+        {
+            std::stringstream ss;
+            ss << "X:" << infoPtr->sThumbRX << " Y:" << infoPtr->sThumbRY;
+            ImGui::Text(ss.str().c_str());
+        }
+        c = ImGui::GetCursorPos();
+
+        c.x += 70;
+        c2 = c;
+
+        c2.x += 50;
+        c2.y += 50;
+        drawlist->AddRect(c, c2, color);
+
+        c3.x = map(infoPtr->sThumbRX, c.x, c2.x);
+        c3.y = map(infoPtr->sThumbRY, c.y, c2.y);
+
+        drawlist->AddNgon(c3, 2, color, 4, 1);
+
+        ImGui::Columns(1);
 
         return true;
     }

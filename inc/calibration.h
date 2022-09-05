@@ -3,6 +3,7 @@
 #include <stdint.h>
 
 namespace bdd {
+
     class Calibration
     {
     public:

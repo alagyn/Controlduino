@@ -9,6 +9,8 @@ constexpr char CAL_FILE[] = "calibration.txt";
 
 namespace bdd {
 
+    constexpr int64_t RANGE_MAX = UINT16_MAX;
+
     Calibration::Calibration()
         : lxMin(0)
         , lxWidth(0)
@@ -23,6 +25,7 @@ namespace bdd {
         , rxDead(0)
         , ryDead(0)
     {
+        /*
         bool makeNew = false;
         if(GetFileAttributesA(CAL_FILE) == INVALID_FILE_ATTRIBUTES)
         {
@@ -49,9 +52,16 @@ namespace bdd {
             f >> rxMin >> rxWidth >> rxDead;
             f >> ryMin >> ryWidth >> ryDead;
         }
+        */
+        lxMin = 0;
+        lxWidth = RANGE_MAX;
+        lyMin = 0;
+        lyWidth = RANGE_MAX;
+        rxMin = 0;
+        rxWidth = RANGE_MAX;
+        ryMin = 0;
+        ryWidth = RANGE_MAX;
     }
-
-    constexpr int64_t RANGE_MAX = UINT16_MAX;
 
     inline int16_t clamp(uint16_t in, const uint16_t min, const uint16_t width, const int16_t deadz)
     {

@@ -1,5 +1,4 @@
 #include <errorUtils.h>
-#include <serialErrors.h>
 #include <serializer.h>
 
 #include <chrono>
@@ -10,10 +9,14 @@ using namespace std;
 
 namespace bdd {
 
-    Serializer::Serializer(const string& port, DWORD baudRate)
-        : handle()
+    Serializer::Serializer()
+        : handle(nullptr)
         , status()
         , errors()
+    {
+    }
+
+    void Serializer::openPort(const string& port, DWORD baudRate)
     {
         handle = CreateFileA(static_cast<LPCSTR>(port.c_str()),
                              GENERIC_READ | GENERIC_WRITE,
@@ -65,6 +68,7 @@ namespace bdd {
 
         while(chrono::duration_cast<chrono::milliseconds>(clock::now() - start).count() < timeoutMs)
         {
+            // TODO handle busy wait?
             ClearCommError(handle, &errors, &status);
 
             if(status.fEof)

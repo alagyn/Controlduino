@@ -2,19 +2,18 @@ Left Stick
   Button = A2 as digital
   X = A3
   Y = A4
-  
+
 Right Stick
   Button = A5 as digital
   X = A6
   Y = A7
-  
-  
+
 D-Pad
   Up = D12
   Right = D11
   Down = D10
   Left = D9
-  
+
 Buttons
   Y = D8
   B = D7
