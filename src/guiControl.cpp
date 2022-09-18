@@ -144,7 +144,8 @@ namespace bdd {
     void ControlduinoGUI::loop(GUIMode mode)
     {
         while(poll(mode))
-            ;
+        {
+        }
     }
 
     std::string ControlduinoGUI::getComPort()
@@ -217,6 +218,18 @@ namespace bdd {
 
         drawInfo_Button("L3", button::L3);
         drawInfo_Button("R3", button::R3);
+
+        {
+            std::stringstream ss;
+            ss << "LT: " << (int)infoPtr->bLeftTrigger;
+            ImGui::Text(ss.str().c_str());
+        }
+
+        {
+            std::stringstream ss;
+            ss << "RT: " << (int)infoPtr->bRightTrigger;
+            ImGui::Text(ss.str().c_str());
+        }
 
         ImGui::Separator();
 

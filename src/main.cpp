@@ -89,6 +89,9 @@ int main(int argc, char* argv[])
         state.bRightTrigger = ard_state.rTrigger;
 
         state.sThumbLX = ard_state.lStickX;
+        state.sThumbLY = ard_state.lStickY;
+        state.sThumbRX = ard_state.rStickX;
+        state.sThumbRY = ard_state.rStickY;
         /*
         state.sThumbLX = calibration.clampLX(ard_state.lStickX);
         state.sThumbLY = calibration.clampLY(ard_state.lStickY);
