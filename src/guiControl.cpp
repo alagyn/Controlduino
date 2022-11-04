@@ -3,6 +3,7 @@
 #include <guiControl.h>
 #include <serializer.h>
 
+#include <exception>
 #include <iostream>
 #include <sstream>
 
@@ -12,6 +13,8 @@
 #include <imgui.h>
 
 namespace bdd {
+
+    float map(int16_t in, float min, float max);
 
     static void glfw_error_callback(int error, const char* description)
     {
@@ -24,7 +27,7 @@ namespace bdd {
         : window(nullptr)
         , port()
         , fresh(true)
-        , infoPtr(nullptr)
+        , state()
     {
         // Setup window
         glfwSetErrorCallback(glfw_error_callback);
@@ -63,6 +66,8 @@ namespace bdd {
         // Setup Platform/Renderer backends
         ImGui_ImplGlfw_InitForOpenGL(window, true);
         ImGui_ImplOpenGL3_Init(glsl_version);
+
+        ImGui::GetIO().ConfigFlags &= ~ImGuiConfigFlags_NavEnableGamepad;
     }
 
     ControlduinoGUI::~ControlduinoGUI()
@@ -76,9 +81,9 @@ namespace bdd {
         glfwTerminate();
     }
 
-    void ControlduinoGUI::setInfoPtr(XUSB_REPORT* infoPtr)
+    void ControlduinoGUI::setState(XUSB_REPORT state)
     {
-        this->infoPtr = infoPtr;
+        this->state = state;
     }
 
     constexpr int windowFlags =
@@ -112,6 +117,9 @@ namespace bdd {
         case GUIMode::Info:
             run = drawInfo();
             break;
+        case GUIMode::Calib:
+            run = drawCalib();
+            break;
         default:
             break;
         }
@@ -136,7 +144,10 @@ namespace bdd {
 
         glfwSwapBuffers(window);
 
-        run = run && !glfwWindowShouldClose(window);
+        if(glfwWindowShouldClose(window))
+        {
+            throw GUIExit();
+        }
 
         return run;
     }
@@ -182,19 +193,205 @@ namespace bdd {
         return true;
     }
 
-    void ControlduinoGUI::drawInfo_Button(const char* title, uint16_t mask)
+    enum class CalibState
     {
-        std::stringstream ss;
-        ss << title << ": " << (bool)(infoPtr->wButtons & mask);
-        ImGui::Text(ss.str().c_str());
+        LX,
+        LY,
+        RX,
+        RY
+    };
+
+    CalibState calibState = CalibState::LX;
+
+    void ControlduinoGUI::setCalib(Calibration* calib)
+    {
+        if(!calib)
+        {
+            throw GUIError();
+        }
+        this->calib = calib;
+    }
+
+    ReadManager* readMan;
+
+    void ControlduinoGUI::runCalibration(ReadManager* rm)
+    {
+        readMan = rm;
+        calibState = CalibState::LX;
+        fresh = true;
+        loop(GUIMode::Calib);
+        calib->writeCalibFile();
     }
 
     float map(int16_t in, float min, float max)
     {
-        constexpr float range = (float)UINT16_MAX;
+        constexpr float range = (float)1024.0;
         float x = in;
 
-        return min + (max - min) * ((x - (float)INT16_MIN) / (range));
+        return min + ((max - min) * (x) / range);
+    }
+
+    uint16_t newMin = 1024 / 2, newMax = 1024 / 2;
+
+    void resetCalibVals()
+    {
+        newMin = 1024 / 2;
+        newMax = 1024 / 2;
+    }
+
+    bool ControlduinoGUI::drawCalib()
+    {
+        ImDrawList* drawlist = ImGui::GetWindowDrawList();
+
+        std::string text;
+        uint16_t curMin, curWidth, curVal;
+
+        XUSB_REPORT state = readMan->updateState();
+
+        switch(calibState)
+        {
+        case CalibState::LX:
+            text = "Left X";
+            curMin = calib->lxMin;
+            curWidth = calib->lxWidth;
+            curVal = state.sThumbLX;
+            break;
+        case CalibState::LY:
+            text = "Left Y";
+            curMin = calib->lyMin;
+            curWidth = calib->lyWidth;
+            curVal = state.sThumbLY;
+            break;
+        case CalibState::RX:
+            text = "Right X";
+            curMin = calib->rxMin;
+            curWidth = calib->rxWidth;
+            curVal = state.sThumbRX;
+            break;
+        case CalibState::RY:
+            text = "Right Y";
+            curMin = calib->ryMin;
+            curWidth = calib->ryWidth;
+            curVal = state.sThumbRY;
+            break;
+        default:
+            break;
+        }
+
+        {
+            ImGui::Text("Calibrating");
+            ImGui::Text(text.c_str());
+            std::stringstream ss;
+            ss << "Val: " << curVal;
+            ImGui::Text(ss.str().c_str());
+        }
+
+        constexpr float WIDTH = 200;
+        constexpr float HEIGHT = 35;
+        constexpr float OFFSET = 10;
+        constexpr float OFFSET_HEIGHT = HEIGHT - (OFFSET);
+        constexpr float MIDDLE = HEIGHT / 2;
+
+        ImVec2 origin = ImGui::GetCursorPos();
+
+        constexpr ImU32 EDGE_COL = IM_COL32(100, 100, 255, 255);
+
+        drawlist->AddLine(origin, ImVec2(origin.x, origin.y + HEIGHT), EDGE_COL);
+        drawlist->AddLine(
+            ImVec2(origin.x + WIDTH, origin.y), ImVec2(origin.x + WIDTH, origin.y + HEIGHT), EDGE_COL);
+
+        constexpr ImU32 BOUND_COL = IM_COL32(255, 50, 50, 255);
+
+        float dist = map(newMin, origin.x, origin.x + WIDTH);
+
+        drawlist->AddLine(ImVec2(dist, origin.y + OFFSET), ImVec2(dist, origin.y + OFFSET_HEIGHT), BOUND_COL);
+
+        dist = map(newMax, origin.x, origin.x + WIDTH);
+
+        drawlist->AddLine(ImVec2(dist, origin.y + OFFSET), ImVec2(dist, origin.y + OFFSET_HEIGHT), BOUND_COL);
+
+        dist = map(curVal, origin.x, origin.x + WIDTH);
+
+        constexpr float DOT_SIZE = 4;
+        constexpr ImU32 DOT_COL = IM_COL32(50, 255, 50, 255);
+
+        drawlist->AddCircleFilled(ImVec2(dist, origin.y + MIDDLE), DOT_SIZE, DOT_COL);
+
+        ImGui::SetCursorPosY(origin.y + HEIGHT + 5);
+
+        newMin = min(newMin, curVal);
+        newMax = max(newMax, curVal);
+
+        {
+            std::stringstream xxx;
+            xxx << "Min: " << newMin << " Max: " << newMax;
+            ImGui::Text(xxx.str().c_str());
+        }
+
+        if(ImGui::Button("Prev"))
+        {
+            switch(calibState)
+            {
+            case CalibState::LX:
+                // Pass
+                break;
+            case CalibState::LY:
+                calibState = CalibState::LX;
+                resetCalibVals();
+                break;
+            case CalibState::RX:
+                calibState = CalibState::LY;
+                resetCalibVals();
+                break;
+            case CalibState::RY:
+                calibState = CalibState::RX;
+                resetCalibVals();
+                break;
+            }
+        }
+
+        if(ImGui::Button("Reset"))
+        {
+            resetCalibVals();
+        }
+
+        if(ImGui::Button("Next"))
+        {
+            switch(calibState)
+            {
+            case CalibState::LX:
+                calibState = CalibState::LY;
+                calib->lxMin = newMin;
+                calib->lxWidth = newMax - newMin;
+                resetCalibVals();
+                break;
+            case CalibState::LY:
+                calibState = CalibState::RX;
+                calib->lyMin = newMin;
+                calib->lyWidth = newMax - newMin;
+                resetCalibVals();
+                break;
+            case CalibState::RX:
+                calibState = CalibState::RY;
+                calib->rxMin = newMin;
+                calib->rxWidth = newMax - newMin;
+                resetCalibVals();
+                break;
+            case CalibState::RY:
+                calib->ryMin = newMin;
+                calib->ryWidth = newMax - newMin;
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    void ControlduinoGUI::drawInfo_Button(const char* title, uint16_t mask)
+    {
+        std::stringstream ss;
+        ss << title << ": " << (bool)(state.wButtons & mask);
+        ImGui::Text(ss.str().c_str());
     }
 
     bool ControlduinoGUI::drawInfo()
@@ -221,13 +418,13 @@ namespace bdd {
 
         {
             std::stringstream ss;
-            ss << "LT: " << (int)infoPtr->bLeftTrigger;
+            ss << "LT: " << (int)state.bLeftTrigger;
             ImGui::Text(ss.str().c_str());
         }
 
         {
             std::stringstream ss;
-            ss << "RT: " << (int)infoPtr->bRightTrigger;
+            ss << "RT: " << (int)state.bRightTrigger;
             ImGui::Text(ss.str().c_str());
         }
 
@@ -242,11 +439,12 @@ namespace bdd {
         ImGui::Text("Left Stick");
         {
             std::stringstream ss;
-            ss << "X:" << infoPtr->sThumbLX << " Y:" << infoPtr->sThumbLY;
+            ss << "X:" << state.sThumbLX << " Y:" << state.sThumbLY;
             ImGui::Text(ss.str().c_str());
         }
 
         ImVec2 c = ImGui::GetCursorPos();
+        c.y += 20;
 
         ImVec4 colorvec(1.0f, 1.0f, 1.0f, 1.0f);
         ImColor color = ImColor(colorvec);
@@ -257,8 +455,14 @@ namespace bdd {
 
         ImVec2 c3 = c;
 
-        c3.x = map(infoPtr->sThumbLX, c.x, c2.x);
-        c3.y = map(infoPtr->sThumbLY, c.y, c2.y);
+        c3.x = map(state.sThumbLX, c.x, c2.x);
+        c3.y = map(state.sThumbLY, c.y, c2.y);
+
+        {
+            std::stringstream ss;
+            ss << "X: " << c3.x - c.x;
+            ImGui::Text(ss.str().c_str());
+        }
 
         drawlist->AddNgon(c3, 2, color, 4, 1);
 
@@ -267,7 +471,7 @@ namespace bdd {
 
         {
             std::stringstream ss;
-            ss << "X:" << infoPtr->sThumbRX << " Y:" << infoPtr->sThumbRY;
+            ss << "X:" << state.sThumbRX << " Y:" << state.sThumbRY;
             ImGui::Text(ss.str().c_str());
         }
         c = ImGui::GetCursorPos();
@@ -279,8 +483,8 @@ namespace bdd {
         c2.y += 50;
         drawlist->AddRect(c, c2, color);
 
-        c3.x = map(infoPtr->sThumbRX, c.x, c2.x);
-        c3.y = map(infoPtr->sThumbRY, c.y, c2.y);
+        c3.x = map(state.sThumbRX, c.x, c2.x);
+        c3.y = map(state.sThumbRY, c.y, c2.y);
 
         drawlist->AddNgon(c3, 2, color, 4, 1);
 

@@ -1,22 +1,24 @@
 #pragma once
 #include <stdint.h>
 
-typedef struct 
+typedef struct
 {
-  uint16_t buttons;
-  uint8_t lTrigger;
-  uint8_t rTrigger;
-  
-  // Unlike the actual XInputState struct, these are raw values from the sensors
-  // Calibration/deadzone is handled by the computer
-  uint16_t lStickX;
-  uint16_t lStickY;
-  uint16_t rStickX;
-  uint16_t rStickY;
+    uint16_t buttons;
+    uint8_t lTrigger;
+    uint8_t rTrigger;
+
+    // Unlike the actual XInputState struct, these are raw values from the sensors
+    // Calibration/deadzone is handled by the computer
+    uint16_t lStickX;
+    uint16_t lStickY;
+    uint16_t rStickX;
+    uint16_t rStickY;
 } Ard_XInput;
 
-namespace button
-{
+constexpr uint8_t START_RUN = 'A';
+constexpr uint8_t STOP_RUN = 'B';
+
+namespace button {
     constexpr uint16_t Up = 0x0001;
     constexpr uint16_t Down = 0x0002;
     constexpr uint16_t Left = 0x0004;
@@ -31,4 +33,4 @@ namespace button
     constexpr uint16_t B = 0x2000;
     constexpr uint16_t X = 0x4000;
     constexpr uint16_t Y = 0x8000;
-}
+} //namespace button

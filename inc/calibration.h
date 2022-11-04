@@ -16,7 +16,10 @@ namespace bdd {
         int16_t clampRX(const uint16_t in);
         int16_t clampRY(const uint16_t in);
 
-    private:
+        void writeCalibFile();
+
+        bool needsCalibrate;
+
         uint16_t lxMin, lxWidth;
         uint16_t lyMin, lyWidth;
         int16_t lxDead, lyDead;

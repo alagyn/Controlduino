@@ -18,13 +18,15 @@ namespace bdd {
 
     void Serializer::openPort(const string& port, DWORD baudRate)
     {
-        handle = CreateFileA(static_cast<LPCSTR>(port.c_str()),
+        std::stringstream ss;
+        ss << "\\\\.\\" << port;
+        handle = CreateFileA(static_cast<LPCSTR>(ss.str().c_str()),
                              GENERIC_READ | GENERIC_WRITE,
                              0,
-                             0,
+                             NULL,
                              OPEN_EXISTING,
                              FILE_ATTRIBUTE_NORMAL,
-                             0);
+                             NULL);
 
         if(handle == INVALID_HANDLE_VALUE)
         {
@@ -33,6 +35,7 @@ namespace bdd {
         }
 
         DCB serialParams = {0};
+        serialParams.DCBlength = sizeof(DCB);
 
         if(!GetCommState(handle, &serialParams))
         {
@@ -40,6 +43,7 @@ namespace bdd {
             throw InitError();
         }
 
+        serialParams.fBinary = true;
         serialParams.BaudRate = baudRate;
         serialParams.ByteSize = 8;
         serialParams.StopBits = ONESTOPBIT;
@@ -80,7 +84,7 @@ namespace bdd {
             {
                 if(!ReadFile(handle, out, size, nullptr, nullptr))
                 {
-                    displayLastError("Serial::readByte");
+                    displayLastError("Serial::readByte()");
                     throw ReadError();
                 }
 
@@ -93,9 +97,43 @@ namespace bdd {
 
     void Serializer::write(const std::string& msg)
     {
+        ClearCommError(handle, &errors, &status);
+
         if(!WriteFile(handle, msg.c_str(), (DWORD)msg.size(), nullptr, nullptr))
         {
             displayLastError("Serial::write()");
+            throw WriteError();
+        }
+    }
+
+    void Serializer::write(const uint8_t* data, int len)
+    {
+        ClearCommError(handle, &errors, &status);
+
+        DWORD written;
+        if(!WriteFile(handle, data, (DWORD)len, nullptr, nullptr))
+        {
+            displayLastError("Serial::write()");
+            throw WriteError();
+        }
+    }
+
+    void Serializer::write(const uint8_t data)
+    {
+        ClearCommError(handle, &errors, &status);
+
+        DWORD written;
+        if(!WriteFile(handle, &data, (DWORD)1, &written, nullptr))
+        {
+            displayLastError("Serial::write()");
+            throw WriteError();
+        }
+
+        if(written != 1)
+        {
+            std::stringstream ss;
+            ss << "Wrong bytes written, expected 1, got " << written;
+            displayError("Serial::write()", ss.str().c_str());
             throw WriteError();
         }
     }

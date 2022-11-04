@@ -11,6 +11,7 @@ set(${PROJECT_NAME}_SRCS
     src/guiControl.cpp
     src/main.cpp
     src/serializer.cpp
+    src/readManager.cpp
 )
 
 add_executable(${PROJECT_NAME} ${${PROJECT_NAME}_SRCS})

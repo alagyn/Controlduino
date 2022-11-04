@@ -1,7 +1,6 @@
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 
-#include <arduino_xinput.h>
 #include <calibration.h>
 #include <controller.h>
 #include <errorUtils.h>
@@ -11,8 +10,6 @@
 #include <iomanip>
 #include <iostream>
 #include <sstream>
-
-#include <ViGEm/Common.h>
 
 int main(int argc, char* argv[])
 {
@@ -30,8 +27,15 @@ int main(int argc, char* argv[])
     */
 
     std::cout << "Selecting COM Port\n";
-    std::string comPort = gui.getComPort();
-    //std::string comPort = "COM4";
+    std::string comPort;
+    try
+    {
+        comPort = gui.getComPort();
+    }
+    catch(bdd::GUIExit err)
+    {
+        std::cout << "GUI closed, exitting\n";
+    }
 
     if(comPort.empty())
     {
@@ -39,17 +43,34 @@ int main(int argc, char* argv[])
         return 0;
     }
 
-    std::cout << "Initilizing Serial Interface\n";
+    std::cout << "Initializing Serial Interface with port: " << comPort << "\n";
     bdd::Serializer serial;
     try
     {
         serial.openPort(comPort, CBR_9600);
     }
-    catch(bdd::SerializerError err)
+    catch(const bdd::SerializerError& err)
     {
         std::cout << "Cannot open Serial interface\n";
         return 1;
     }
+
+    try
+    {
+        serial.write('A');
+        uint8_t data;
+        serial.readBytes(10000, &data, 1);
+        std::cout << data << "\n";
+    }
+    catch(bdd::Timeout err)
+    {
+        std::cout << "Timeout\n";
+    }
+
+    return 1;
+
+    // Init Read Manager
+    bdd::ReadManager readMan(&serial);
 
     // Init Controller
     std::cout << "Initializing ViGEm controller\n";
@@ -59,52 +80,45 @@ int main(int argc, char* argv[])
     std::cout << "Initializing Calibration System\n";
     bdd::Calibration calibration;
 
+    gui.setCalib(&calibration);
+
     std::cout << "Initializing Controller State\n";
-    XUSB_REPORT state;
-    XUSB_REPORT_INIT(&state);
-
-    gui.setInfoPtr(&state);
-
-    Ard_XInput ard_state;
-    uint8_t* buff = (uint8_t*)&ard_state;
 
     std::cout << "Initializing Complete\n";
 
-    // TODO exitting
-    // TODO remapping
-    bool run = true;
-    while(run)
+    if(calibration.needsCalibrate)
     {
         try
         {
-            serial.readBytes(10000, buff, sizeof(Ard_XInput));
+            gui.runCalibration(&readMan);
         }
-        catch(bdd::SerializerError err)
+        catch(bdd::GUIExit err)
         {
-            break;
+            std::cout << "GUI closed, exitting\n";
+            return 0;
         }
+    }
 
-        state.wButtons = ard_state.buttons;
-        state.bLeftTrigger = ard_state.lTrigger;
-        state.bRightTrigger = ard_state.rTrigger;
-
-        state.sThumbLX = ard_state.lStickX;
-        state.sThumbLY = ard_state.lStickY;
-        state.sThumbRX = ard_state.rStickX;
-        state.sThumbRY = ard_state.rStickY;
-        /*
-        state.sThumbLX = calibration.clampLX(ard_state.lStickX);
-        state.sThumbLY = calibration.clampLY(ard_state.lStickY);
-        state.sThumbRX = calibration.clampRX(ard_state.rStickX);
-        state.sThumbRY = calibration.clampRY(ard_state.rStickY);
-        */
-
+    // TODO remapping?
+    bool run = true;
+    while(run)
+    {
+        XUSB_REPORT state = readMan.updateState();
         controller.update(state);
-
-        if(!gui.poll(bdd::GUIMode::Info))
+        gui.setState(state);
+        try
         {
-            break;
+            if(!gui.poll(bdd::GUIMode::Info))
+            {
+                break;
+            }
         }
+        catch(bdd::GUIExit err)
+        {
+            std::cout << "GUI closed, exitting\n";
+            return 0;
+        }
+
         //Sleep(10);
     }
 

@@ -20,6 +20,8 @@ namespace bdd {
 
         void readBytes(unsigned long timeoutMicroS, uint8_t* out, DWORD bytes);
         void write(const std::string& msg);
+        void write(const uint8_t* data, int len);
+        void write(const uint8_t data);
 
         static void checkPorts(std::vector<std::pair<std::string, std::string>>& out);
     };

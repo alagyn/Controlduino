@@ -1,6 +1,12 @@
 add_subdirectory(glfw)
 add_subdirectory(ViGEmClient)
 
+set(BOOST_ROOT "${PROJECT_SOURCE_DIR}/third_party/boost" CACHE PATH "boost root")
+set(Boost_NO_SYSTEM_PATHS "ON" CACHE BOOL "no system")
+
+find_package(Boost 1.80.0
+    REQUIRED
+)
 
 set(ImGUI_SRCS
     imgui/imgui.cpp
