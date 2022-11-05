@@ -3,7 +3,6 @@
 #include <serializer.h>
 
 #include <ViGEm/Common.h>
-#include <Windows.h>
 #include <arduino_xinput.h>
 
 namespace bdd {

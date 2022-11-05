@@ -2,6 +2,8 @@
 #include <exception>
 #include <string>
 
+#include <readManager.h>
+
 #include <Windows.h>
 
 #include <GLFW/glfw3.h>
@@ -9,7 +11,6 @@
 
 #include <arduino_xinput.h>
 #include <calibration.h>
-#include <readManager.h>
 
 namespace bdd {
 

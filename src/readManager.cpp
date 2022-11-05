@@ -8,19 +8,24 @@ namespace bdd {
         , state()
     {
         XUSB_REPORT_INIT(&state);
-        std::cout << "Starting\n";
+        std::cout << "ReadManager: Starting\n";
+        // Ensure it is stopped
+        serial->write(STOP_RUN);
         serial->write(START_RUN);
     }
 
     ReadManager::~ReadManager()
     {
-        std::cout << "Stopping\n";
-        serial->write(STOP_RUN);
+        std::cout << "ReadManager: Stopping\n";
+        if(!serial->errored())
+        {
+            serial->write(STOP_RUN);
+        }
     }
 
     XUSB_REPORT ReadManager::updateState()
     {
-        serial->readBytes(10000, buff, sizeof(Ard_XInput));
+        serial->readBytes(buff, sizeof(Ard_XInput));
 
         state.wButtons = ard_state.buttons;
         state.bLeftTrigger = ard_state.lTrigger;

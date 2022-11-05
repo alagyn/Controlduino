@@ -16,7 +16,7 @@ constexpr uint8_t buff_size = sizeof(state);
 
 bool running = false;
 
-constexpr unsigned long RATE = 1;
+constexpr unsigned long RATE = 50;
 
 unsigned long lastTime;
 
@@ -61,16 +61,6 @@ bool light = false;
 
 void loop()
 {
-    if(Serial.available())
-    {
-        uint8_t data;
-        digitalWrite(13, HIGH);
-        Serial.readBytes(&data, 1);
-        Serial.write(data + 1);
-    }
-
-    return;
-
     unsigned long time = millis();
 
     unsigned long diff = time - lastTime;
@@ -86,12 +76,12 @@ void loop()
     {
         uint8_t data;
         Serial.readBytes(&data, 1);
-        if(data == START_RUN && !running)
+        if(data == START_RUN)
         {
             running = true;
             digitalWrite(13, HIGH);
         }
-        else if(data == STOP_RUN && running)
+        else if(data == STOP_RUN)
         {
             running = false;
             digitalWrite(13, LOW);

@@ -14,15 +14,27 @@ set(${PROJECT_NAME}_SRCS
     src/readManager.cpp
 )
 
+find_package(Boost 1.81.0
+    REQUIRED
+    COMPONENTS system regex
+)
+
 add_executable(${PROJECT_NAME} ${${PROJECT_NAME}_SRCS})
 target_include_directories(${PROJECT_NAME}
     PRIVATE
     inc
     arduino/Controlduino
+    PUBLIC
+    ${Boost_INCLUDE_DIRS}
 )
+
+message("Libs: ${Boost_LIBRARIES}")
+message("Include: ${Boost_INCLUDE_DIRS}")
+
 target_link_libraries(${PROJECT_NAME}
     glfw
     ImGUI
     ViGEmClient
+    ${Boost_LIBRARIES}
 )
 

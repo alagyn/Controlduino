@@ -1,27 +1,36 @@
 #pragma once
-#include <Windows.h>
+
+#include <memory>
 #include <string>
 #include <vector>
 
+#include <SDKDDKVer.h>
+#include <boost/asio/io_context.hpp>
+#include <boost/asio/serial_port.hpp>
+
 namespace bdd {
+
     class Serializer
     {
     private:
-        HANDLE handle;
-        COMSTAT status;
-        DWORD errors;
+        boost::asio::io_context ctx;
+        boost::asio::serial_port port;
+
+        bool error;
 
     public:
-        explicit Serializer();
+        explicit Serializer(const std::string& portname, unsigned baudrate);
         Serializer(const Serializer&) = delete;
         ~Serializer();
 
-        void openPort(const std::string& port, DWORD baudRate);
+        void openPort(const std::string& portName, unsigned baudrate);
 
-        void readBytes(unsigned long timeoutMicroS, uint8_t* out, DWORD bytes);
+        void readBytes(uint8_t* out, unsigned bytes);
         void write(const std::string& msg);
         void write(const uint8_t* data, int len);
         void write(const uint8_t data);
+
+        bool errored();
 
         static void checkPorts(std::vector<std::pair<std::string, std::string>>& out);
     };

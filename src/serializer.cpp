@@ -1,141 +1,69 @@
-#include <errorUtils.h>
+
 #include <serializer.h>
 
 #include <chrono>
 #include <sstream>
 #include <strsafe.h>
 
+#include <boost/asio/read.hpp>
+#include <boost/asio/write.hpp>
+#include <boost/system/system_error.hpp>
+
+#include <iostream>
+
 using namespace std;
 
 namespace bdd {
 
-    Serializer::Serializer()
-        : handle(nullptr)
-        , status()
-        , errors()
+    Serializer::Serializer(const std::string& portname, unsigned baudrate)
+        : ctx()
+        , port(ctx, portname)
+        , error(false)
     {
-    }
-
-    void Serializer::openPort(const string& port, DWORD baudRate)
-    {
-        std::stringstream ss;
-        ss << "\\\\.\\" << port;
-        handle = CreateFileA(static_cast<LPCSTR>(ss.str().c_str()),
-                             GENERIC_READ | GENERIC_WRITE,
-                             0,
-                             NULL,
-                             OPEN_EXISTING,
-                             FILE_ATTRIBUTE_NORMAL,
-                             NULL);
-
-        if(handle == INVALID_HANDLE_VALUE)
-        {
-            displayLastError("CreateFile");
-            throw InitError();
-        }
-
-        DCB serialParams = {0};
-        serialParams.DCBlength = sizeof(DCB);
-
-        if(!GetCommState(handle, &serialParams))
-        {
-            displayLastError("GetCommState");
-            throw InitError();
-        }
-
-        serialParams.fBinary = true;
-        serialParams.BaudRate = baudRate;
-        serialParams.ByteSize = 8;
-        serialParams.StopBits = ONESTOPBIT;
-        serialParams.Parity = NOPARITY;
-        serialParams.fDtrControl = DTR_CONTROL_ENABLE;
-
-        if(!SetCommState(handle, &serialParams))
-        {
-            displayLastError("SetCommState");
-            throw InitError();
-        }
-
-        PurgeComm(handle, PURGE_RXCLEAR | PURGE_TXCLEAR);
+        using serial = boost::asio::serial_port_base;
+        port.set_option(serial::baud_rate(baudrate));
+        port.set_option(serial::parity(serial::parity::none));
+        port.set_option(serial::stop_bits(serial::stop_bits::one));
+        port.set_option(serial::character_size(8U));
     }
 
     Serializer::~Serializer()
     {
-        CloseHandle(handle);
+        port.close();
     }
 
-    void Serializer::readBytes(unsigned long timeoutMs, uint8_t* out, DWORD size)
+    bool Serializer::errored()
     {
-        using clock = std::chrono::high_resolution_clock;
+        return error;
+    }
 
-        auto start = clock::now();
-
-        while(chrono::duration_cast<chrono::milliseconds>(clock::now() - start).count() < timeoutMs)
+    void Serializer::readBytes(uint8_t* out, unsigned size)
+    {
+        try
         {
-            // TODO handle busy wait?
-            ClearCommError(handle, &errors, &status);
-
-            if(status.fEof)
-            {
-                throw ReadEOF();
-            }
-
-            if(status.cbInQue > 0)
-            {
-                if(!ReadFile(handle, out, size, nullptr, nullptr))
-                {
-                    displayLastError("Serial::readByte()");
-                    throw ReadError();
-                }
-
-                return;
-            }
+            boost::asio::read(port, boost::asio::buffer(out, size));
         }
-
-        throw Timeout();
+        catch(const boost::wrapexcept<boost::system::system_error>& err)
+        {
+            std::cout << "Serializer::readBytes(): " << err.what();
+            error = true;
+            throw ReadError();
+        }
     }
 
     void Serializer::write(const std::string& msg)
     {
-        ClearCommError(handle, &errors, &status);
-
-        if(!WriteFile(handle, msg.c_str(), (DWORD)msg.size(), nullptr, nullptr))
-        {
-            displayLastError("Serial::write()");
-            throw WriteError();
-        }
+        boost::asio::write(port, boost::asio::buffer(msg.c_str(), msg.length()));
     }
 
     void Serializer::write(const uint8_t* data, int len)
     {
-        ClearCommError(handle, &errors, &status);
-
-        DWORD written;
-        if(!WriteFile(handle, data, (DWORD)len, nullptr, nullptr))
-        {
-            displayLastError("Serial::write()");
-            throw WriteError();
-        }
+        boost::asio::write(port, boost::asio::buffer(data, len));
     }
 
     void Serializer::write(const uint8_t data)
     {
-        ClearCommError(handle, &errors, &status);
-
-        DWORD written;
-        if(!WriteFile(handle, &data, (DWORD)1, &written, nullptr))
-        {
-            displayLastError("Serial::write()");
-            throw WriteError();
-        }
-
-        if(written != 1)
-        {
-            std::stringstream ss;
-            ss << "Wrong bytes written, expected 1, got " << written;
-            displayError("Serial::write()", ss.str().c_str());
-            throw WriteError();
-        }
+        boost::asio::write(port, boost::asio::buffer(&data, 1));
     }
 
     void Serializer::checkPorts(std::vector<std::pair<std::string, std::string>>& out)

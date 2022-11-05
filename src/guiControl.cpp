@@ -319,8 +319,8 @@ namespace bdd {
 
         ImGui::SetCursorPosY(origin.y + HEIGHT + 5);
 
-        newMin = min(newMin, curVal);
-        newMax = max(newMax, curVal);
+        newMin = newMin < curVal ? newMin : curVal;
+        newMax = newMax > curVal ? newMax : curVal;
 
         {
             std::stringstream xxx;

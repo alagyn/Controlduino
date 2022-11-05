@@ -1,15 +1,17 @@
 #define WIN32_LEAN_AND_MEAN
-#include <Windows.h>
+
+#include <serializer.h>
 
 #include <calibration.h>
 #include <controller.h>
 #include <errorUtils.h>
 #include <guiControl.h>
-#include <serializer.h>
 
 #include <iomanip>
 #include <iostream>
 #include <sstream>
+
+constexpr unsigned BAUD_RATE = 9600;
 
 int main(int argc, char* argv[])
 {
@@ -44,30 +46,7 @@ int main(int argc, char* argv[])
     }
 
     std::cout << "Initializing Serial Interface with port: " << comPort << "\n";
-    bdd::Serializer serial;
-    try
-    {
-        serial.openPort(comPort, CBR_9600);
-    }
-    catch(const bdd::SerializerError& err)
-    {
-        std::cout << "Cannot open Serial interface\n";
-        return 1;
-    }
-
-    try
-    {
-        serial.write('A');
-        uint8_t data;
-        serial.readBytes(10000, &data, 1);
-        std::cout << data << "\n";
-    }
-    catch(bdd::Timeout err)
-    {
-        std::cout << "Timeout\n";
-    }
-
-    return 1;
+    bdd::Serializer serial(comPort, BAUD_RATE);
 
     // Init Read Manager
     bdd::ReadManager readMan(&serial);
@@ -88,9 +67,11 @@ int main(int argc, char* argv[])
 
     if(calibration.needsCalibrate)
     {
+        std::cout << "Running Calibration\n";
         try
         {
             gui.runCalibration(&readMan);
+            std::cout << "Calibraation Complete\n";
         }
         catch(bdd::GUIExit err)
         {
@@ -101,25 +82,34 @@ int main(int argc, char* argv[])
 
     // TODO remapping?
     bool run = true;
-    while(run)
+    try
     {
-        XUSB_REPORT state = readMan.updateState();
-        controller.update(state);
-        gui.setState(state);
-        try
+        while(run)
         {
-            if(!gui.poll(bdd::GUIMode::Info))
-            {
-                break;
-            }
-        }
-        catch(bdd::GUIExit err)
-        {
-            std::cout << "GUI closed, exitting\n";
-            return 0;
-        }
+            XUSB_REPORT state = readMan.updateState();
 
-        //Sleep(10);
+            controller.update(state);
+
+            gui.setState(state);
+            try
+            {
+                if(!gui.poll(bdd::GUIMode::Info))
+                {
+                    break;
+                }
+            }
+            catch(bdd::GUIExit err)
+            {
+                std::cout << "GUI closed, exitting\n";
+                return 0;
+            }
+
+            //Sleep(10);
+        }
+    }
+    catch(bdd::ReadError err)
+    {
+        //PASS
     }
 
     std::cout << "Exitting\n";

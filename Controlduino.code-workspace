@@ -1,11 +1,7 @@
 {
 	"folders": [
 		{
-			"name": "root",
 			"path": "."
-		},
-		{
-			"path": "arduino"
 		}
 	],
 	"settings": {
@@ -13,7 +9,9 @@
 			"xstring": "cpp",
 			"exception": "cpp",
 			"iosfwd": "cpp",
-			"charconv": "cpp"
+			"charconv": "cpp",
+			"vector": "cpp",
+			"memory": "cpp"
 		}
 	}
 }
