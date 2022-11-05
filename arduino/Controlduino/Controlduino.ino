@@ -80,11 +80,13 @@ void loop()
         {
             running = true;
             digitalWrite(13, HIGH);
+            Serial.write(START_RUN);
         }
         else if(data == STOP_RUN)
         {
             running = false;
             digitalWrite(13, LOW);
+            Serial.write(STOP_RUN);
         }
     }
 

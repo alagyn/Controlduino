@@ -81,7 +81,7 @@ namespace bdd {
         glfwTerminate();
     }
 
-    void ControlduinoGUI::setState(XUSB_REPORT state)
+    void ControlduinoGUI::setState(const Ard_XInput& state)
     {
         this->state = state;
     }
@@ -246,7 +246,7 @@ namespace bdd {
         std::string text;
         uint16_t curMin, curWidth, curVal;
 
-        XUSB_REPORT state = readMan->updateState();
+        Ard_XInput state = readMan->updateState();
 
         switch(calibState)
         {
@@ -254,25 +254,25 @@ namespace bdd {
             text = "Left X";
             curMin = calib->lxMin;
             curWidth = calib->lxWidth;
-            curVal = state.sThumbLX;
+            curVal = state.lStickX;
             break;
         case CalibState::LY:
             text = "Left Y";
             curMin = calib->lyMin;
             curWidth = calib->lyWidth;
-            curVal = state.sThumbLY;
+            curVal = state.lStickY;
             break;
         case CalibState::RX:
             text = "Right X";
             curMin = calib->rxMin;
             curWidth = calib->rxWidth;
-            curVal = state.sThumbRX;
+            curVal = state.rStickX;
             break;
         case CalibState::RY:
             text = "Right Y";
             curMin = calib->ryMin;
             curWidth = calib->ryWidth;
-            curVal = state.sThumbRY;
+            curVal = state.rStickY;
             break;
         default:
             break;
@@ -390,7 +390,7 @@ namespace bdd {
     void ControlduinoGUI::drawInfo_Button(const char* title, uint16_t mask)
     {
         std::stringstream ss;
-        ss << title << ": " << (bool)(state.wButtons & mask);
+        ss << title << ": " << (bool)(state.buttons & mask);
         ImGui::Text(ss.str().c_str());
     }
 
@@ -418,13 +418,13 @@ namespace bdd {
 
         {
             std::stringstream ss;
-            ss << "LT: " << (int)state.bLeftTrigger;
+            ss << "LT: " << (int)state.lTrigger;
             ImGui::Text(ss.str().c_str());
         }
 
         {
             std::stringstream ss;
-            ss << "RT: " << (int)state.bRightTrigger;
+            ss << "RT: " << (int)state.rTrigger;
             ImGui::Text(ss.str().c_str());
         }
 
@@ -439,7 +439,7 @@ namespace bdd {
         ImGui::Text("Left Stick");
         {
             std::stringstream ss;
-            ss << "X:" << state.sThumbLX << " Y:" << state.sThumbLY;
+            ss << "X:" << state.lStickX << " Y:" << state.lStickY;
             ImGui::Text(ss.str().c_str());
         }
 
@@ -455,8 +455,8 @@ namespace bdd {
 
         ImVec2 c3 = c;
 
-        c3.x = map(state.sThumbLX, c.x, c2.x);
-        c3.y = map(state.sThumbLY, c.y, c2.y);
+        c3.x = map(state.lStickX, c.x, c2.x);
+        c3.y = map(state.lStickY, c.y, c2.y);
 
         {
             std::stringstream ss;
@@ -471,7 +471,7 @@ namespace bdd {
 
         {
             std::stringstream ss;
-            ss << "X:" << state.sThumbRX << " Y:" << state.sThumbRY;
+            ss << "X:" << state.rStickX << " Y:" << state.rStickY;
             ImGui::Text(ss.str().c_str());
         }
         c = ImGui::GetCursorPos();
@@ -483,8 +483,8 @@ namespace bdd {
         c2.y += 50;
         drawlist->AddRect(c, c2, color);
 
-        c3.x = map(state.sThumbRX, c.x, c2.x);
-        c3.y = map(state.sThumbRY, c.y, c2.y);
+        c3.x = map(state.rStickX, c.x, c2.x);
+        c3.y = map(state.rStickY, c.y, c2.y);
 
         drawlist->AddNgon(c3, 2, color, 4, 1);
 

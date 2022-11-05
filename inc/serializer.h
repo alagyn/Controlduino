@@ -17,6 +17,11 @@ namespace bdd {
         boost::asio::serial_port port;
 
         bool error;
+        bool timedOut;
+        boost::system::error_code temp_ec;
+
+        void timeout();
+        void readHandler(const boost::system::error_code& ec);
 
     public:
         explicit Serializer(const std::string& portname, unsigned baudrate);
@@ -25,10 +30,16 @@ namespace bdd {
 
         void openPort(const std::string& portName, unsigned baudrate);
 
+        // Blocking with timeout
+        void readBytes(uint8_t* out, unsigned bytes, unsigned timeoutMs);
+
+        // Blocking
         void readBytes(uint8_t* out, unsigned bytes);
         void write(const std::string& msg);
         void write(const uint8_t* data, int len);
         void write(const uint8_t data);
+
+        void flush();
 
         bool errored();
 

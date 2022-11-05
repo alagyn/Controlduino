@@ -1,6 +1,6 @@
 #include "calibration.h"
 
-#include <Windows.h>
+#include <boost/filesystem.hpp>
 #include <fstream>
 
 #include "errorUtils.h"
@@ -26,21 +26,9 @@ namespace bdd {
         , rxDead(0)
         , ryDead(0)
     {
-        bool makeNew = false;
-        if(GetFileAttributesA(CAL_FILE) == INVALID_FILE_ATTRIBUTES)
-        {
-            if(GetLastError() == ERROR_FILE_NOT_FOUND)
-            {
-                makeNew = true;
-            }
-            else
-            {
-                displayLastError("Calibration()");
-                throw CalibrationError();
-            }
-        }
+        boost::filesystem::path calFilePath(CAL_FILE);
 
-        if(makeNew)
+        if(!boost::filesystem::exists(calFilePath))
         {
             needsCalibrate = true;
             lxMin = 0;
@@ -98,6 +86,22 @@ namespace bdd {
     int16_t Calibration::clampRY(const uint16_t in)
     {
         return clamp(in, ryMin, ryWidth, ryDead);
+    }
+
+    XUSB_REPORT Calibration::clampState(const Ard_XInput& ard_state)
+    {
+        XUSB_REPORT out = {0};
+
+        out.wButtons = ard_state.buttons;
+        out.bLeftTrigger = ard_state.lTrigger;
+        out.bRightTrigger = ard_state.rTrigger;
+
+        out.sThumbLX = clampLX(ard_state.lStickX);
+        out.sThumbLY = clampLY(ard_state.lStickY);
+        out.sThumbRX = clampRX(ard_state.rStickX);
+        out.sThumbRY = clampRY(ard_state.rStickY);
+
+        return out;
     }
 
     void Calibration::writeCalibFile()

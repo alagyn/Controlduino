@@ -16,7 +16,7 @@ set(${PROJECT_NAME}_SRCS
 
 find_package(Boost 1.81.0
     REQUIRED
-    COMPONENTS system regex
+    COMPONENTS system regex filesystem
 )
 
 add_executable(${PROJECT_NAME} ${${PROJECT_NAME}_SRCS})

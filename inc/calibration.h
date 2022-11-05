@@ -2,8 +2,19 @@
 #include <exception>
 #include <stdint.h>
 
+#define WIN32_LEAN_AND_MEAN
+#include <Windows.h>
+
+#include <ViGEm/Common.h>
+#include <Xinput.h>
+#include <arduino_xinput.h>
+
 namespace bdd {
 
+    /**
+     * @brief Handles analog axi calibration and arduino -> XInput conversion
+     *
+     */
     class Calibration
     {
     public:
@@ -15,6 +26,8 @@ namespace bdd {
 
         int16_t clampRX(const uint16_t in);
         int16_t clampRY(const uint16_t in);
+
+        XUSB_REPORT clampState(const Ard_XInput& ard_state);
 
         void writeCalibFile();
 

@@ -49,7 +49,16 @@ int main(int argc, char* argv[])
     bdd::Serializer serial(comPort, BAUD_RATE);
 
     // Init Read Manager
-    bdd::ReadManager readMan(&serial);
+    bdd::ReadManager readMan;
+    try
+    {
+        readMan.init(&serial);
+    }
+    catch(bdd::ReadError& err)
+    {
+        std::cout << "Error initializer serial manager, exitting\n";
+        return 1;
+    }
 
     // Init Controller
     std::cout << "Initializing ViGEm controller\n";
@@ -86,7 +95,7 @@ int main(int argc, char* argv[])
     {
         while(run)
         {
-            XUSB_REPORT state = readMan.updateState();
+            Ard_XInput state = readMan.updateState();
 
             controller.update(state);
 

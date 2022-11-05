@@ -4,10 +4,7 @@
 
 #include <readManager.h>
 
-#include <Windows.h>
-
 #include <GLFW/glfw3.h>
-#include <ViGEm/Common.h>
 
 #include <arduino_xinput.h>
 #include <calibration.h>
@@ -29,7 +26,7 @@ namespace bdd {
         ~ControlduinoGUI();
 
         void setCalib(Calibration* calib);
-        void setState(XUSB_REPORT state);
+        void setState(const Ard_XInput& state);
         std::string getComPort();
 
         void runCalibration(ReadManager* rm);
@@ -38,7 +35,7 @@ namespace bdd {
         void loop(GUIMode mode);
 
     private:
-        XUSB_REPORT state;
+        Ard_XInput state;
         Calibration* calib;
 
         GLFWwindow* window;

@@ -46,8 +46,9 @@ namespace bdd {
         vigem_free(client);
     }
 
-    void Controller::update(const XUSB_REPORT& state)
+    void Controller::update(const Ard_XInput& ard_state)
     {
+        XUSB_REPORT state = calib->clampState(ard_state);
         vigem_target_x360_update(client, pad, state);
     }
 
