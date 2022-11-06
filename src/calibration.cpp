@@ -15,7 +15,7 @@ namespace bdd {
 
     uint16_t checkRange(uint16_t min, uint16_t range)
     {
-        if(min + range > 1023)
+        if(min + (uint32_t)range > RANGE_MAX)
         {
             return 1023 - min;
         }
