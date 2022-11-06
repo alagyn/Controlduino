@@ -7,7 +7,7 @@
 #include "errorUtils.h"
 #include <iomanip>
 
-constexpr char CAL_FILE[] = "calibration.txt";
+constexpr char CAL_FILE[] = "calibration.dat";
 
 namespace bdd {
 

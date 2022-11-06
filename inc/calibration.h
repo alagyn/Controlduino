@@ -26,16 +26,22 @@ namespace bdd {
         uint16_t ryMin, ryRange;
         int16_t rxDead, ryDead;
 
-    public:
-        explicit Calibration();
-        Calibration(Calibration&) = delete;
-
         int16_t inline clampLX(const uint16_t in);
         int16_t inline clampLY(const uint16_t in);
 
         int16_t inline clampRX(const uint16_t in);
         int16_t inline clampRY(const uint16_t in);
 
+    public:
+        explicit Calibration();
+        Calibration(Calibration&) = delete;
+
+        /**
+         * @brief Clamps the incoming arduino state and outputs the corresponding XInput state
+         *
+         * @param ard_state The input state
+         * @return XUSB_REPORT The Xinput state with proper calibration
+         */
         XUSB_REPORT clampState(const Ard_XInput& ard_state);
 
         void setLX(uint16_t min, uint16_t range);
