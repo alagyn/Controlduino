@@ -104,6 +104,7 @@ namespace bdd {
         ImGui::NewFrame();
 
         auto io = ImGui::GetIO();
+        io.ConfigFlags &= ~ImGuiConfigFlags_NavEnableGamepad;
 
         ImGui::SetNextWindowPos(ImVec2(0, 0));
         ImGui::SetNextWindowSize(io.DisplaySize);
@@ -252,26 +253,26 @@ namespace bdd {
         {
         case CalibState::LX:
             text = "Left X";
-            curMin = calib->lxMin;
-            curWidth = calib->lxWidth;
+            curMin = calib->getLXMin();
+            curWidth = calib->getLXRange();
             curVal = state.lStickX;
             break;
         case CalibState::LY:
             text = "Left Y";
-            curMin = calib->lyMin;
-            curWidth = calib->lyWidth;
+            curMin = calib->getLYMin();
+            curWidth = calib->getLYRange();
             curVal = state.lStickY;
             break;
         case CalibState::RX:
             text = "Right X";
-            curMin = calib->rxMin;
-            curWidth = calib->rxWidth;
+            curMin = calib->getRXMin();
+            curWidth = calib->getRXRange();
             curVal = state.rStickX;
             break;
         case CalibState::RY:
             text = "Right Y";
-            curMin = calib->ryMin;
-            curWidth = calib->ryWidth;
+            curMin = calib->getRYMin();
+            curWidth = calib->getRYRange();
             curVal = state.rStickY;
             break;
         default:
@@ -361,25 +362,21 @@ namespace bdd {
             {
             case CalibState::LX:
                 calibState = CalibState::LY;
-                calib->lxMin = newMin;
-                calib->lxWidth = newMax - newMin;
+                calib->setLX(newMin, newMax - newMin);
                 resetCalibVals();
                 break;
             case CalibState::LY:
                 calibState = CalibState::RX;
-                calib->lyMin = newMin;
-                calib->lyWidth = newMax - newMin;
+                calib->setLY(newMin, newMax - newMin);
                 resetCalibVals();
                 break;
             case CalibState::RX:
                 calibState = CalibState::RY;
-                calib->rxMin = newMin;
-                calib->rxWidth = newMax - newMin;
+                calib->setRX(newMin, newMax - newMin);
                 resetCalibVals();
                 break;
             case CalibState::RY:
-                calib->ryMin = newMin;
-                calib->ryWidth = newMax - newMin;
+                calib->setRY(newMin, newMax - newMin);
                 return false;
             }
         }

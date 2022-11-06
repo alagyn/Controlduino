@@ -39,6 +39,11 @@ namespace bdd {
         }
     }
 
+    void Controller::init(Calibration* calib)
+    {
+        this->calib = calib;
+    }
+
     Controller::~Controller()
     {
         vigem_target_remove(client, pad);

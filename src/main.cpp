@@ -16,17 +16,11 @@ constexpr unsigned BAUD_RATE = 9600;
 int main(int argc, char* argv[])
 {
     std::cout << "Starting GUI\n";
-    // TODO select com-device
     bdd::ControlduinoGUI gui;
 
-    // TODO remove
-    /*
-    XUSB_REPORT xxx;
-    XUSB_REPORT_INIT(&xxx);
-
-    gui.setInfoPtr(&xxx);
-    gui.loop(bdd::GUIMode::Info);
-    */
+    // Load calibration
+    std::cout << "Initializing Calibration System\n";
+    bdd::Calibration calibration;
 
     std::cout << "Selecting COM Port\n";
     std::string comPort;
@@ -64,13 +58,8 @@ int main(int argc, char* argv[])
     std::cout << "Initializing ViGEm controller\n";
     bdd::Controller controller;
 
-    // Load calibration
-    std::cout << "Initializing Calibration System\n";
-    bdd::Calibration calibration;
-
     gui.setCalib(&calibration);
-
-    std::cout << "Initializing Controller State\n";
+    controller.init(&calibration);
 
     std::cout << "Initializing Complete\n";
 
