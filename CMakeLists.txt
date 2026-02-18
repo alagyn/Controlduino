@@ -38,3 +38,7 @@ target_link_libraries(${PROJECT_NAME}
     ${Boost_LIBRARIES}
 )
 
+target_compile_definitions(${PROJECT_NAME}
+    PRIVATE
+    BOOST_ALL_NO_LIB
+)
